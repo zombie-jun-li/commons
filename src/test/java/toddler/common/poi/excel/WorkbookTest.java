@@ -40,11 +40,11 @@ public class WorkbookTest {
                 .outputHeader(true)
                 .rows(rows)
                 .build();
+
         HSSFWorkbook hssfWorkbook = new Workbook().addSheet(sheet).addSheet(sheet2).build();
 
         hssfWorkbook.write(new File(System.getProperty("user.dir") + "/target/multi-sheets.xls"));
     }
-
 
     public static class Row {
         @Cell(index = 0, title = "name", size = 30)

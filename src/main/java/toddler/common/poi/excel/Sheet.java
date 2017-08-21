@@ -24,7 +24,7 @@ public final class Sheet<T> {
     }
 
     public static <T> SheetBuilder<T> newBuilder(Class<T> clazz) {
-        return new SheetBuilder(clazz);
+        return new SheetBuilder<>(clazz);
     }
 
     public String getName() {
@@ -56,17 +56,17 @@ public final class Sheet<T> {
             this.clazz = clazz;
         }
 
-        public SheetBuilder rows(List<T> rows) {
+        public SheetBuilder<T> rows(List<T> rows) {
             this.rows = rows;
             return this;
         }
 
-        public SheetBuilder name(String name) {
+        public SheetBuilder<T> name(String name) {
             this.name = name;
             return this;
         }
 
-        public SheetBuilder outputHeader(boolean outputHeader) {
+        public SheetBuilder<T> outputHeader(boolean outputHeader) {
             this.outputHeader = outputHeader;
             return this;
         }
