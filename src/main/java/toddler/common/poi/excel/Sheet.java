@@ -13,7 +13,7 @@ public final class Sheet<T> {
 
     private final Class<T> clazz;
 
-    private boolean outputHeader = true;
+    private final boolean outputHeader;
 
 
     private Sheet(SheetBuilder sheetBuilder) {
@@ -50,7 +50,7 @@ public final class Sheet<T> {
 
         private final Class<T> clazz;
 
-        private boolean outputHeader;
+        private boolean outputHeader = true;
 
         public SheetBuilder(Class<T> clazz) {
             this.clazz = clazz;
