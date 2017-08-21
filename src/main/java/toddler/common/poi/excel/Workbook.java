@@ -21,74 +21,67 @@ import java.util.stream.IntStream;
  */
 public class Workbook {
 
+    private static final int FIRST_ROW_INDEX = 0;
 
-    public static WorkbookBuilder newBuilder() {
-        return new WorkbookBuilder();
+    private final List<Sheet> sheets = Lists.newArrayList();
+
+    public Workbook addSheet(Sheet sheet) {
+        sheets.add(sheet);
+        return this;
     }
 
-    public static class WorkbookBuilder {
+    public HSSFWorkbook build() {
+        HSSFWorkbook workbook = new HSSFWorkbook();
+        sheets.stream().forEach(sheet -> buildSheet(workbook, sheet));
+        return workbook;
+    }
 
-        private boolean outputHeader = true;
-
-        private final List<Sheet> sheets = Lists.newArrayList();
-
-        public WorkbookBuilder addSheet(Sheet sheet) {
-            sheets.add(sheet);
-            return this;
+    private void buildSheet(HSSFWorkbook workbook, Sheet sheet) {
+        HSSFSheet hssfSheet = Strings.isNull(sheet.getName()) ? workbook.createSheet() : workbook.createSheet(sheet.getName());
+        int skipRows = 0;
+        if (sheet.isOutputHeader()) {
+            buildSheetCellHeader(workbook, hssfSheet, hssfSheet.createRow(0), sheet.getClazz());
+            skipRows++;
         }
-
-        public WorkbookBuilder outputHeader(boolean outputHeader) {
-            this.outputHeader = outputHeader;
-            return this;
+        if (!Optional.ofNullable(sheet.getRows()).isPresent()) {
+            return;
         }
+        final int finalSkipRows = skipRows;
+        IntStream.range(0, sheet.getRows().size())
+                .forEach(idx -> buildSheetRow(workbook, hssfSheet, idx + finalSkipRows, sheet.getRows().get(idx)));
+    }
 
-        public HSSFWorkbook build() {
-            HSSFWorkbook workbook = new HSSFWorkbook();
-            sheets.stream().forEach(sheet -> buildSheet(workbook, sheet));
-            return workbook;
-        }
+    private void buildSheetRow(HSSFWorkbook workbook, HSSFSheet hssfSheet, int rowNumber, Object data) {
+        HSSFRow hssfRow = hssfSheet.createRow(rowNumber);
+        Arrays.stream(data.getClass().getDeclaredFields())
+                .forEach(field -> buildSheetCellContent(workbook, hssfSheet, hssfRow, field, data));
+    }
 
-        private void buildSheet(HSSFWorkbook workbook, Sheet sheet) {
-            HSSFSheet hssfSheet = Strings.isNull(sheet.getName()) ? workbook.createSheet() : workbook.createSheet(sheet.getName());
-            int skipRows = 0;
-            if (outputHeader) {
-                buildSheetCellHeader(workbook, hssfSheet, hssfSheet.createRow(0), sheet.getClazz());
-                skipRows++;
-            }
-            if (!Optional.ofNullable(sheet.getRows()).isPresent()) {
-                return;
-            }
-            final int finalSkipRows = skipRows;
-            IntStream.range(0, sheet.getRows().size())
-                    .forEach(idx -> buildSheetRow(hssfSheet, idx + finalSkipRows, sheet.getRows().get(idx)));
-        }
+    private void buildSheetCellHeader(HSSFWorkbook workbook, HSSFSheet hssfSheet, HSSFRow hssfRow, Class<?> dataClass) {
+        Field[] fields = dataClass.getDeclaredFields();
+        IntStream.range(0, fields.length)
+                .forEach(index -> {
+                    Cell cell = fields[index].getAnnotation(Cell.class);
+                    hssfRow.createCell(cell.index());
+                    HSSFCell hssfCell = hssfRow.createCell(cell.index());
+                    hssfCell.setCellValue(cell.title());
+                    HSSFCellStyle hssfCellStyle = workbook.createCellStyle();
+                    hssfCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                    hssfCellStyle.setFillForegroundColor(cell.background().getIndex());
+                    hssfCell.setCellStyle(hssfCellStyle);
+                    buildSheetStyle(workbook, hssfSheet, hssfRow, hssfCell, cell);
+                });
+    }
 
-        private void buildSheetRow(HSSFSheet hssfSheet, int rowNumber, Object data) {
-            HSSFRow hssfRow = hssfSheet.createRow(rowNumber);
-            Arrays.stream(data.getClass().getDeclaredFields())
-                    .forEach(field -> buildSheetCellContent(hssfRow, field, data));
-        }
+    private void buildSheetCellContent(HSSFWorkbook workbook, HSSFSheet hssfSheet, HSSFRow hssfRow, Field field, Object data) {
+        Cell cell = field.getAnnotation(Cell.class);
+        HSSFCell hssfCell = hssfRow.createCell(cell.index());
+        hssfCell.setCellValue(String.valueOf(Reflects.getField(field, data)));
+        buildSheetStyle(workbook, hssfSheet, hssfRow, hssfCell, cell);
+    }
 
-        private void buildSheetCellHeader(HSSFWorkbook workbook, HSSFSheet hssfSheet, HSSFRow hssfRow, Class<?> dataClass) {
-            Field[] fields = dataClass.getDeclaredFields();
-            IntStream.range(0, fields.length)
-                    .forEach(index -> {
-                        Cell cell = fields[index].getAnnotation(Cell.class);
-                        hssfRow.createCell(cell.index());
-                        HSSFCellStyle hssfCellStyle = workbook.createCellStyle();
-                        hssfCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                        hssfCellStyle.setFillForegroundColor(cell.background().getIndex());
-                        HSSFCell hssfCell = hssfRow.createCell(cell.index());
-                        hssfCell.setCellStyle(hssfCellStyle);
-                        hssfCell.setCellValue(cell.title());
-                        hssfSheet.setColumnWidth(index, cell.size() * 256);
-                    });
-        }
-
-        private void buildSheetCellContent(HSSFRow hssfRow, Field field, Object data) {
-            Cell cell = field.getAnnotation(Cell.class);
-            HSSFCell hssfCell = hssfRow.createCell(cell.index());
-            hssfCell.setCellValue(String.valueOf(Reflects.getField(field, data)));
-        }
+    private void buildSheetStyle(HSSFWorkbook workbook, HSSFSheet hssfSheet, HSSFRow hssfRow, HSSFCell hssfCell, Cell cell) {
+        if (FIRST_ROW_INDEX != hssfRow.getRowNum()) return;
+        hssfSheet.setColumnWidth(cell.index(), cell.size() * 256);
     }
 }
