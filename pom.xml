@@ -10,7 +10,7 @@
     <version>1.0</version>
 
     <properties>
-        <jdkVersion>1.9</jdkVersion>
+        <jdkVersion>1.8</jdkVersion>
     </properties>
 
     <dependencies>

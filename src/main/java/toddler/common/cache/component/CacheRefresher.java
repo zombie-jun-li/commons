@@ -12,10 +12,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class CacheRefresher implements Runnable {
 
-    private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
 
-    private List<CacheComponent> caches = Lists.newArrayList();
+    private final List<CacheComponent> caches = Lists.newArrayList();
 
 
     public void refresh() {
