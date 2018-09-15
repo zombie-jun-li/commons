@@ -1,5 +1,6 @@
 package toddler.common.util;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -11,6 +12,6 @@ public abstract class Strings {
     }
 
     public static boolean isNull(String value) {
-        return null == value;
+        return Objects.equals(null, value);
     }
 }

@@ -19,7 +19,7 @@ public final class Retry<T> {
         int attempts = 0;
         while (attempts < maxAttempts) {
             try {
-                maxAttempts++;
+                attempts++;
                 return callable.call();
             } catch (Exception e) {
                 if (attempts >= maxAttempts) throw e;
@@ -36,12 +36,12 @@ public final class Retry<T> {
         return this;
     }
 
-    private Retry<T> retryInterval(Duration retryInterval) {
+    public Retry<T> retryInterval(Duration retryInterval) {
         this.retryInterval = retryInterval;
         return this;
     }
 
-    private Retry<T> retryOn(Predicate<Exception> predicate) {
+    public Retry<T> retryOn(Predicate<Exception> predicate) {
         this.predicate = predicate;
         return this;
     }
